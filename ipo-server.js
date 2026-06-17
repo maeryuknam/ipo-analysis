@@ -75,20 +75,25 @@ app.post('/api/analyze', async (req, res) => {
 지침:
 - 알려진 사실 기반으로 분석하되, 불확실하거나 비상장으로 정보가 제한적인 부분은 명시하세요.
 - 각 섹션의 points는 정확히 3개, 긍정/부정/경고/중립을 균형있게 담으세요.
-- 각 point의 text는 1~2문장으로 간결하게, summary와 overallReason도 짧게 핵심만 작성하세요.
+- 각 point의 text는 반드시 1문장(80자 이내)으로 핵심만, summary와 overallReason도 각 2문장 이내로 짧게 작성하세요.
 - 분석은 구체적이고 실무적으로, 한국어로 작성하세요.`;
 
   try {
     const msg = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+      max_tokens: 3000,
       tools: [analysisTool],
       tool_choice: { type: 'tool', name: 'ipo_analysis_report' },
       messages: [{ role: 'user', content: prompt }]
     });
 
     const toolUse = msg.content.find(c => c.type === 'tool_use');
-    if (!toolUse) return res.status(500).json({ error: '분석 결과를 생성하지 못했습니다.' });
+    if (!toolUse || !Array.isArray(toolUse.input?.sections)) {
+      const reason = msg.stop_reason === 'max_tokens'
+        ? '분석 내용이 길어 응답이 잘렸습니다. 다시 시도해 주세요.'
+        : '분석 결과를 생성하지 못했습니다. 다시 시도해 주세요.';
+      return res.status(500).json({ error: reason });
+    }
 
     res.json(toolUse.input);
   } catch (err) {
