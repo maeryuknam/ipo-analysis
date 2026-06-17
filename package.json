@@ -1,0 +1,16 @@
+{
+  "name": "ipo-analysis",
+  "version": "1.0.0",
+  "description": "AI 애널리스트 기반 IPO 투자 분석 웹 도구 — 기술주 관점의 4대 핵심 분석",
+  "main": "ipo-server.js",
+  "scripts": {
+    "start": "node ipo-server.js"
+  },
+  "keywords": ["ipo", "investment", "analysis", "anthropic", "claude", "stock"],
+  "author": "maeryuknam",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.0",
+    "express": "^4.21.0"
+  }
+}

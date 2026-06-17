@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>IPO 투자 분석 프레임워크</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f5f5f3;
+      --bg-tertiary: #eeede8;
+      --text-primary: #1a1a18;
+      --text-secondary: #5f5e5a;
+      --text-tertiary: #888780;
+      --border: rgba(0,0,0,0.12);
+      --border-md: rgba(0,0,0,0.22);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg-primary: #1e1e1c;
+        --bg-secondary: #2a2a28;
+        --bg-tertiary: #333330;
+        --text-primary: #f0efe9;
+        --text-secondary: #b4b2a9;
+        --text-tertiary: #888780;
+        --border: rgba(255,255,255,0.12);
+        --border-md: rgba(255,255,255,0.22);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem 4rem;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.5rem;
+      border: 0.5px solid var(--border);
+    }
+    .hero-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+    .hero-title { font-size: 22px; font-weight: 500; color: var(--text-primary); }
+
+    .phase-row { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .phase-pill {
+      flex: 1; min-width: 110px; text-align: center;
+      padding: 7px 10px; border-radius: 999px; font-size: 12px; font-weight: 500;
+      border: 0.5px solid var(--border-md); background: var(--bg-primary);
+      color: var(--text-secondary); display: flex; align-items: center;
+      justify-content: center; gap: 5px;
+    }
+    .phase-pill.active { background: #EEEDFE; color: #3C3489; border-color: #AFA9EC; }
+
+    .divider-label {
+      font-size: 11px; font-weight: 500; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.06em; margin: 1.25rem 0 0.75rem;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px; margin-bottom: 12px;
+    }
+
+    .card {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem 1.25rem;
+    }
+    .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .icon-circle {
+      width: 36px; height: 36px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .ic-blue   { background: #E6F1FB; color: #0C447C; }
+    .ic-teal   { background: #E1F5EE; color: #085041; }
+    .ic-amber  { background: #FAEEDA; color: #633806; }
+    .ic-purple { background: #EEEDFE; color: #3C3489; }
+    .ic-coral  { background: #FAECE7; color: #712B13; }
+    .ic-green  { background: #EAF3DE; color: #27500A; }
+    .card-title { font-size: 15px; font-weight: 500; color: var(--text-primary); margin: 0; }
+    .card-sub   { font-size: 12px; color: var(--text-secondary); margin: 0; }
+
+    .checklist { list-style: none; }
+    .checklist li {
+      font-size: 13px; color: var(--text-secondary);
+      padding: 5px 0; border-bottom: 0.5px solid var(--border);
+      display: flex; align-items: flex-start; gap: 8px; line-height: 1.5;
+    }
+    .checklist li:last-child { border-bottom: none; }
+    .checklist li i { color: #1D9E75; margin-top: 2px; flex-shrink: 0; font-size: 10px; }
+
+    .badge {
+      display: inline-block; font-size: 11px; font-weight: 500;
+      padding: 2px 8px; border-radius: var(--radius-md); margin-right: 4px;
+    }
+    .badge-blue   { background: #E6F1FB; color: #185FA5; }
+    .badge-red    { background: #FCEBEB; color: #A32D2D; }
+    .badge-green  { background: #EAF3DE; color: #3B6D11; }
+    .badge-amber  { background: #FAEEDA; color: #854F0B; }
+
+    .warning-box {
+      background: #FAEEDA; border-left: 3px solid #EF9F27;
+      border-radius: 0 var(--radius-md) var(--radius-md) 0;
+      padding: 0.75rem 1rem; margin-bottom: 12px;
+    }
+    .warning-box p { font-size: 13px; color: #633806; line-height: 1.6; }
+
+    .verdict-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 1.5rem; }
+    .verdict-card { padding: 0.75rem 1rem; border-radius: var(--radius-md); }
+    .verdict-go { background: #EAF3DE; border: 0.5px solid #C0DD97; }
+    .verdict-no { background: #FCEBEB; border: 0.5px solid #F7C1C1; }
+    .verdict-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; display: flex; align-items: center; gap: 4px; }
+    .verdict-go .verdict-label { color: #3B6D11; }
+    .verdict-no .verdict-label { color: #A32D2D; }
+    .verdict-list { list-style: none; }
+    .verdict-list li { font-size: 12px; padding: 3px 0; color: var(--text-secondary); }
+    .verdict-go .verdict-list li::before { content: "✓ "; color: #3B6D11; font-weight: 500; }
+    .verdict-no .verdict-list li::before { content: "✗ "; color: #A32D2D; font-weight: 500; }
+
+    /* ── 회사 분석 입력 섹션 ── */
+    .input-section {
+      background: var(--bg-primary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .input-section-title {
+      font-size: 16px; font-weight: 500; color: var(--text-primary);
+      margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+    }
+    .input-section-sub { font-size: 13px; color: var(--text-secondary); margin-bottom: 1.25rem; }
+
+    .input-row {
+      display: flex; gap: 10px; align-items: stretch;
+    }
+    .company-input {
+      flex: 1; height: 44px; padding: 0 14px;
+      border: 0.5px solid var(--border-md); border-radius: var(--radius-md);
+      background: var(--bg-secondary); color: var(--text-primary);
+      font-size: 14px; font-family: inherit; outline: none;
+      transition: border-color 0.15s;
+    }
+    .company-input:focus { border-color: #7F77DD; box-shadow: 0 0 0 3px rgba(127,119,221,0.15); }
+    .company-input::placeholder { color: var(--text-tertiary); }
+
+    .analyze-btn {
+      height: 44px; padding: 0 20px;
+      background: #534AB7; color: #fff;
+      border: none; border-radius: var(--radius-md);
+      font-size: 14px; font-weight: 500; font-family: inherit;
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      transition: background 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+    .analyze-btn:hover  { background: #3C3489; }
+    .analyze-btn:active { transform: scale(0.98); }
+
+    /* ── 결과 카드 ── */
+    .result-area { margin-top: 1.25rem; }
+    .result-card {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      display: none;
+    }
+    .result-card.visible { display: block; }
+    .result-header {
+      display: flex; align-items: center; gap: 10px; margin-bottom: 1rem;
+      padding-bottom: 0.75rem; border-bottom: 0.5px solid var(--border);
+    }
+    .company-avatar {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: #EEEDFE; color: #3C3489;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 500; flex-shrink: 0;
+    }
+    .company-name { font-size: 18px; font-weight: 500; color: var(--text-primary); }
+    .company-label { font-size: 12px; color: var(--text-secondary); }
+
+    .checklist-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 10px;
+    }
+    .check-group { }
+    .check-group-title {
+      font-size: 12px; font-weight: 500; color: var(--text-tertiary);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      margin-bottom: 8px; display: flex; align-items: center; gap: 6px;
+    }
+    .check-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 7px 10px; border-radius: var(--radius-md);
+      background: var(--bg-primary); border: 0.5px solid var(--border);
+      margin-bottom: 6px; cursor: pointer; user-select: none;
+      transition: background 0.1s;
+    }
+    .check-item:hover { background: var(--bg-tertiary); }
+    .check-item.checked { border-color: #5DCAA5; background: #f0faf6; }
+    .check-item input[type="checkbox"] { accent-color: #1D9E75; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+    .check-item label { font-size: 13px; color: var(--text-secondary); cursor: pointer; line-height: 1.4; }
+    .check-item.checked label { color: #085041; }
+
+    .score-bar-wrap { margin-top: 1rem; padding-top: 1rem; border-top: 0.5px solid var(--border); }
+    .score-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .score-label { font-size: 13px; color: var(--text-secondary); min-width: 60px; }
+    .score-track { flex: 1; height: 8px; background: var(--bg-tertiary); border-radius: 999px; overflow: hidden; }
+    .score-fill { height: 100%; background: #1D9E75; border-radius: 999px; transition: width 0.4s ease; }
+    .score-pct { font-size: 13px; font-weight: 500; color: var(--text-primary); min-width: 36px; text-align: right; }
+    .score-verdict {
+      margin-top: 10px; padding: 10px 14px;
+      border-radius: var(--radius-md); font-size: 13px; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .sv-pass  { background: #EAF3DE; color: #3B6D11; }
+    .sv-caution { background: #FAEEDA; color: #854F0B; }
+    .sv-fail  { background: #FCEBEB; color: #A32D2D; }
+
+    /* ── 스피너 ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 32px; height: 32px; border-radius: 50%;
+      border: 2px solid var(--border);
+      border-top-color: #534AB7;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto;
+    }
+
+    /* ── 분석 결과 ── */
+    .result-summary {
+      background: var(--bg-secondary);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 12px;
+    }
+    .result-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .company-avatar {
+      width: 48px; height: 48px; border-radius: 50%;
+      background: #EEEDFE; color: #3C3489;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 17px; font-weight: 500; flex-shrink: 0;
+    }
+    .company-name { font-size: 20px; font-weight: 500; color: var(--text-primary); margin: 0 0 3px; }
+    .company-label { font-size: 12px; color: var(--text-secondary); margin: 0; }
+    .summary-text {
+      font-size: 14px; color: var(--text-secondary); line-height: 1.7;
+      padding-top: 10px; border-top: 0.5px solid var(--border);
+    }
+    .overall-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 500;
+      padding: 5px 14px; border-radius: 999px; margin-top: 10px;
+    }
+    .ob-go     { background: #EAF3DE; color: #3B6D11; }
+    .ob-caution { background: #FAEEDA; color: #854F0B; }
+    .ob-stop   { background: #FCEBEB; color: #A32D2D; }
+
+    .deep-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 10px;
+    }
+    .deep-card { border: 0.5px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+    .deep-card-head { padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+    .deep-card-num {
+      width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 500; color: #fff; margin-top: 1px;
+    }
+    .deep-card-titles { flex: 1; }
+    .deep-card-title { font-size: 14px; font-weight: 500; color: var(--text-primary); margin: 0 0 2px; }
+    .deep-card-sub { font-size: 11px; color: var(--text-secondary); margin: 0; }
+    .verdict-pill {
+      font-size: 11px; font-weight: 500; padding: 3px 10px;
+      border-radius: 999px; white-space: nowrap; align-self: center; flex-shrink: 0;
+    }
+    .vp-pos  { background: #EAF3DE; color: #3B6D11; }
+    .vp-neu  { background: #E6F1FB; color: #185FA5; }
+    .vp-neg  { background: #FCEBEB; color: #A32D2D; }
+    .deep-card-body { padding: 0 14px 14px; }
+    .deep-point {
+      font-size: 13px; color: var(--text-secondary); line-height: 1.6;
+      padding: 7px 0; border-bottom: 0.5px solid var(--border);
+      display: flex; gap: 8px; align-items: flex-start;
+    }
+    .deep-point:last-child { border-bottom: none; }
+    .dp-icon { font-size: 15px; margin-top: 1px; flex-shrink: 0; }
+    .dp-positive { color: #1D9E75; }
+    .dp-negative { color: #E24B4A; }
+    .dp-warning  { color: #EF9F27; }
+    .dp-neutral  { color: #378ADD; }
+
+    .error-box {
+      background: #FCEBEB; border: 0.5px solid #F7C1C1;
+      border-radius: var(--radius-md); padding: 1rem 1.25rem;
+      font-size: 13px; color: #A32D2D; margin-top: 1rem;
+    }
+
+    .footer-note {
+      font-size: 12px; color: var(--text-tertiary);
+      text-align: center; margin-top: 2rem;
+      padding-top: 1rem; border-top: 0.5px solid var(--border);
+    }
+
+    @media (max-width: 600px) {
+      .verdict-grid { grid-template-columns: 1fr; }
+      .input-row { flex-direction: column; }
+      .analyze-btn { height: 44px; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="hero">
+    <p class="hero-sub">IPO 투자 분석 프레임워크 · 기술주 전문 애널리스트 관점</p>
+    <p class="hero-title">공모 청약 &amp; 사전 투자 의사결정 가이드</p>
+  </div>
+
+  <div class="phase-row">
+    <div class="phase-pill active"><i class="ti ti-search"></i> 1단계 · 사전 조사</div>
+    <div class="phase-pill active"><i class="ti ti-chart-bar"></i> 2단계 · 재무 분석</div>
+    <div class="phase-pill active"><i class="ti ti-users"></i> 3단계 · 팀 &amp; 주주</div>
+    <div class="phase-pill active"><i class="ti ti-scale"></i> 4단계 · 밸류에이션</div>
+    <div class="phase-pill active"><i class="ti ti-alert-triangle"></i> 5단계 · 리스크</div>
+    <div class="phase-pill active"><i class="ti ti-check"></i> 6단계 · 의사결정</div>
+  </div>
+
+  <div class="divider-label">핵심 분석 영역</div>
+
+  <div class="section-grid">
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-blue"><i class="ti ti-building" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">비즈니스 모델 &amp; 시장</p>
+          <p class="card-sub">What &amp; How — 무엇을, 어떻게 버는가</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i>TAM/SAM/SOM — 실제 도달 가능한 시장 규모 검증</li>
+        <li><i class="ti ti-point-filled"></i>수익화 구조 (구독/거래수수료/광고/SaaS ARR 등)</li>
+        <li><i class="ti ti-point-filled"></i>네트워크 효과 존재 여부 — 성장할수록 해자가 깊어지는가</li>
+        <li><i class="ti ti-point-filled"></i>경쟁사 대비 차별화 포인트 (기술 특허, 데이터, 브랜드)</li>
+        <li><i class="ti ti-point-filled"></i>플랫폼 vs 파이프라인 — 확장성 구조인가</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-teal"><i class="ti ti-trending-up" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">재무 지표 분석</p>
+          <p class="card-sub">성장성 · 수익성 · 현금 흐름</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i>YoY 매출 성장률 — 최소 30%+ (기술 성장주 기준)</li>
+        <li><i class="ti ti-point-filled"></i>Gross Margin — SaaS 70%+, 하드웨어 40%+</li>
+        <li><i class="ti ti-point-filled"></i>Rule of 40 (매출성장률 + EBITDA 마진 ≥ 40)</li>
+        <li><i class="ti ti-point-filled"></i>CAC vs LTV — LTV/CAC ≥ 3 이상인가</li>
+        <li><i class="ti ti-point-filled"></i>번 레이트 &amp; 런웨이 — 상장 후 24개월 이상 보유 여부</li>
+        <li><i class="ti ti-point-filled"></i>Net Revenue Retention (NRR) — 110%+ 이면 우수</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-purple"><i class="ti ti-user-check" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">경영진 &amp; 주주 구성</p>
+          <p class="card-sub">누가 만들고, 누가 믿었는가</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i>창업자 트랙레코드 — 반복 창업자 (Serial Founder) 여부</li>
+        <li><i class="ti ti-point-filled"></i>주요 VC 투자자 라인업 (a16z, Sequoia, Benchmark 등)</li>
+        <li><i class="ti ti-point-filled"></i>락업 기간 (Lock-up) — 기존 주주 매도 시점 파악</li>
+        <li><i class="ti ti-point-filled"></i>창업자 지분율 &amp; 의결권 구조 (이중 주식 클래스)</li>
+        <li><i class="ti ti-point-filled"></i>주관사 등급 — 골드만/모건/JP모건 여부</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-amber"><i class="ti ti-currency-dollar" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">밸류에이션 적정성</p>
+          <p class="card-sub">얼마에 사는가가 수익을 결정한다</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i>EV/Revenue 멀티플 — 동종 상장사 대비 할인/프리미엄</li>
+        <li><i class="ti ti-point-filled"></i>마지막 프라이빗 라운드 대비 공모가 수준</li>
+        <li><i class="ti ti-point-filled"></i>공모가 밴드 상단/하단 — 기관 수요예측 경쟁률 확인</li>
+        <li><i class="ti ti-point-filled"></i>DCF 역산 — 공모가가 내재한 성장 가정 현실적인가</li>
+        <li><i class="ti ti-point-filled"></i>비교군 (Comps) 선정 오류 여부 — 부풀린 비교군 주의</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-coral"><i class="ti ti-file-description" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">S-1 / 투자설명서 정독</p>
+          <p class="card-sub">숫자 뒤에 숨은 리스크 찾기</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i>Risk Factors 섹션 — 반드시 전문 읽기 (숫자보다 중요)</li>
+        <li><i class="ti ti-point-filled"></i>고객 집중도 — 상위 3개 고객이 매출의 50%+ 이면 경고</li>
+        <li><i class="ti ti-point-filled"></i>관련 당사자 거래 (Related Party) 내역</li>
+        <li><i class="ti ti-point-filled"></i>소송 &amp; 규제 리스크 현황</li>
+        <li><i class="ti ti-point-filled"></i>공모 자금 사용 목적 — R&amp;D vs 기존 주주 현금화 비율</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-green"><i class="ti ti-clock" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">타이밍 &amp; 시장 환경</p>
+          <p class="card-sub">좋은 기업도 나쁜 타이밍엔 손실</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i>금리 환경 — 고금리 국면엔 고멀티플 기술주 할인 심화</li>
+        <li><i class="ti ti-point-filled"></i>IPO 마켓 온도 — 직전 3개월 IPO 수익률 추이</li>
+        <li><i class="ti ti-point-filled"></i>섹터 로테이션 흐름 — AI/클라우드/핀테크 수급 확인</li>
+        <li><i class="ti ti-point-filled"></i>락업 만료일 캘린더 — 상장 후 6개월 주가 패턴 선행 분석</li>
+        <li><i class="ti ti-point-filled"></i>비교 IPO 사례 — 유사 기업 상장 후 1년 수익률</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="divider-label">사전 투자 (Pre-IPO) vs 공모 청약 — 접근 차이</div>
+
+  <div class="section-grid">
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-purple"><i class="ti ti-rocket" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">Pre-IPO 사전 투자</p>
+          <p class="card-sub">Series B~D, 세컨더리 매입</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-green">장점</span>공모가 대비 30~60% 저가 진입 가능</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-green">장점</span>성장 스토리 초기부터 참여, 멀티플 상승 수혜</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-red">위험</span>유동성 제로 — IPO 지연/철회 시 엑시트 불가</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-red">위험</span>정보 비대칭 극심 — 내부 정보 접근 한계</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-amber">체크</span>SAFE/전환사채 조건, 청산 우선권 구조 반드시 확인</span></li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="icon-circle ic-blue"><i class="ti ti-ticket" style="font-size:18px"></i></div>
+        <div>
+          <p class="card-title">공모 청약</p>
+          <p class="card-sub">일반/기관 공모, 상장일 전략</p>
+        </div>
+      </div>
+      <ul class="checklist">
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-green">장점</span>공정한 공모가 — 기관 수요예측 반영된 가격</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-green">장점</span>즉시 유동성 — 상장 당일 매도 가능</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-red">위험</span>공모가 고평가 시 상장 첫날 손실</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-red">위험</span>경쟁률 높은 청약 = 소량 배정 → 기대 수익 희석</span></li>
+        <li><i class="ti ti-point-filled"></i><span><span class="badge badge-amber">전략</span>상장 후 30~90일 조정 구간에서 분할 매수 고려</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="warning-box" style="margin-top:12px">
+    <p><i class="ti ti-alert-triangle" style="font-size:15px; vertical-align:-2px; margin-right:6px"></i><strong style="color:#633806;">경험칙 경고 :</strong> IPO 직후 6개월은 기존 VC/창업자 매도 물량 압박으로 주가 조정 구간인 경우가 많습니다. 화려한 공모 이슈와 실제 장기 수익률은 별개입니다. 유니콘 발굴은 "좋은 기업 선별"보다 "적정 가격 진입"이 더 중요합니다.</p>
+  </div>
+
+  <div class="divider-label">최종 투자 판단 — Go / No-Go 기준</div>
+
+  <div class="verdict-grid">
+    <div class="verdict-card verdict-go">
+      <p class="verdict-label"><i class="ti ti-thumb-up" style="font-size:13px"></i> 진입 긍정 시그널</p>
+      <ul class="verdict-list">
+        <li>YoY 매출 40%+ &amp; 마진 개선 추세</li>
+        <li>NRR 110%+ (기존 고객이 더 많이 씀)</li>
+        <li>Tier 1 VC + 전략적 투자자 동반</li>
+        <li>공모가 = 마지막 라운드 대비 할인</li>
+        <li>경쟁사 없는 독점적 기술 포지션</li>
+        <li>창업자 지분율 상장 후 20%+ 유지</li>
+      </ul>
+    </div>
+    <div class="verdict-card verdict-no">
+      <p class="verdict-label"><i class="ti ti-thumb-down" style="font-size:13px"></i> 패스 경고 시그널</p>
+      <ul class="verdict-list">
+        <li>매출 성장 둔화 + 마진 악화 동시</li>
+        <li>공모 자금 대부분이 기존 주주 현금화</li>
+        <li>고객 집중도 과도 (상위 1~2개사 의존)</li>
+        <li>공모가 > 마지막 라운드 2배 이상</li>
+        <li>런웨이 12개월 미만 (자금 조달 목적 IPO)</li>
+        <li>규제 리스크 미해결 상태 (소송 진행 중)</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ── 회사 분석 입력 섹션 ── -->
+  <div class="input-section">
+    <p class="input-section-title">
+      <i class="ti ti-building-skyscraper" style="font-size:20px; color:#534AB7"></i>
+      기업 분석 시작
+    </p>
+    <p class="input-section-sub">IPO를 준비 중이거나 공모 청약을 검토 중인 회사명을 입력하세요. AI 애널리스트가 4가지 핵심 관점으로 분석 결과를 제공합니다.</p>
+
+    <div class="input-row">
+      <input
+        type="text"
+        id="companyInput"
+        class="company-input"
+        placeholder="예: 크래프톤, Stripe, CoreWeave, 두나무 …"
+        maxlength="60"
+      />
+      <button class="analyze-btn" id="analyzeBtn" onclick="startAnalysis()">
+        <i class="ti ti-player-play" style="font-size:15px"></i> 분석 시작
+      </button>
+    </div>
+
+    <!-- 로딩 -->
+    <div id="loadingArea" style="display:none; margin-top:1.25rem; text-align:center; padding:2rem 0;">
+      <div class="spinner"></div>
+      <p style="font-size:13px; color:var(--text-secondary); margin-top:12px;" id="loadingText">AI 애널리스트가 분석 중입니다…</p>
+    </div>
+
+    <!-- 결과 -->
+    <div id="resultArea" style="display:none; margin-top:1.25rem;"></div>
+  </div>
+
+  <p class="footer-note">본 프레임워크는 투자 판단을 위한 분석 관점 제공이며, 투자 권유가 아닙니다. 최종 판단은 개인의 책임입니다.</p>
+
+</div>
+
+<script>
+  // ── 이전 체크리스트 코드 제거, API 연동으로 교체 ──
+
+  const SECTION_COLORS = {
+    narrative: { color: '#534AB7', bg: '#EEEDFE' },
+    moat:      { color: '#0F6E56', bg: '#E1F5EE' },
+    overhang:  { color: '#993C1D', bg: '#FAECE7' },
+    macro:     { color: '#185FA5', bg: '#E6F1FB' },
+  };
+
+  const POINT_ICONS = {
+    positive: { cls: 'dp-positive', icon: 'ti-circle-check' },
+    negative: { cls: 'dp-negative', icon: 'ti-circle-x' },
+    warning:  { cls: 'dp-warning',  icon: 'ti-alert-circle' },
+    neutral:  { cls: 'dp-neutral',  icon: 'ti-info-circle' },
+  };
+
+  function getInitials(name) {
+    const t = name.trim();
+    if (!t) return '?';
+    const w = t.split(/\s+/);
+    if (w.length >= 2) return (w[0][0] + w[1][0]).toUpperCase();
+    if (/[가-힣]/.test(t)) return t.slice(0, 2);
+    return t.slice(0, 2).toUpperCase();
+  }
+
+  async function startAnalysis() {
+    const input = document.getElementById('companyInput');
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+
+    const btn = document.getElementById('analyzeBtn');
+    btn.disabled = true;
+    btn.style.opacity = '0.6';
+
+    document.getElementById('loadingArea').style.display = 'block';
+    document.getElementById('resultArea').style.display = 'none';
+    document.getElementById('resultArea').innerHTML = '';
+
+    const loadingMsgs = [
+      `"${name}" 기업 정보 검토 중…`,
+      '비즈니스 모델 및 재무 구조 분석 중…',
+      '해자와 경쟁 우위 평가 중…',
+      '오버행 및 밸류에이션 검토 중…',
+      '거시 환경 싱크로율 산출 중…',
+    ];
+    let msgIdx = 0;
+    const loadingEl = document.getElementById('loadingText');
+    const msgTimer = setInterval(() => {
+      msgIdx = (msgIdx + 1) % loadingMsgs.length;
+      loadingEl.textContent = loadingMsgs[msgIdx];
+    }, 2200);
+
+    try {
+      const res = await fetch('/api/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company: name }),
+      });
+
+      const result = await res.json();
+      clearInterval(msgTimer);
+      document.getElementById('loadingArea').style.display = 'none';
+
+      if (result.error) throw new Error(result.error);
+      renderResult(result);
+
+    } catch (err) {
+      clearInterval(msgTimer);
+      document.getElementById('loadingArea').style.display = 'none';
+      const area = document.getElementById('resultArea');
+      area.style.display = 'block';
+      area.innerHTML = `<div class="error-box"><i class="ti ti-alert-triangle" style="font-size:15px;vertical-align:-2px;margin-right:6px"></i>분석 중 오류가 발생했습니다: ${err.message}</div>`;
+    } finally {
+      btn.disabled = false;
+      btn.style.opacity = '1';
+    }
+  }
+
+  function renderResult(data) {
+    const overallMap = {
+      '투자 긍정':     { cls: 'ob-go',      icon: 'ti-thumb-up' },
+      '추가 검토 필요': { cls: 'ob-caution', icon: 'ti-zoom-question' },
+      '투자 보류':     { cls: 'ob-stop',     icon: 'ti-thumb-down' },
+    };
+    const ov = overallMap[data.overall] || overallMap['추가 검토 필요'];
+
+    const area = document.getElementById('resultArea');
+    area.style.display = 'block';
+
+    // 요약 카드
+    const summary = document.createElement('div');
+    summary.className = 'result-summary';
+    summary.innerHTML = `
+      <div class="result-header">
+        <div class="company-avatar">${getInitials(data.company)}</div>
+        <div>
+          <p class="company-name">${data.company}</p>
+          <p class="company-label">AI 애널리스트 IPO 분석 리포트</p>
+        </div>
+      </div>
+      <p class="summary-text">${data.summary}</p>
+      <div class="overall-badge ${ov.cls}">
+        <i class="ti ${ov.icon}" style="font-size:15px"></i>
+        종합 의견: ${data.overall}
+      </div>
+      <p style="font-size:13px;color:var(--text-secondary);margin-top:10px;line-height:1.7;">${data.overallReason}</p>
+    `;
+    area.appendChild(summary);
+
+    // 4개 섹션 그리드
+    const grid = document.createElement('div');
+    grid.className = 'deep-grid';
+
+    const sectionNums = { narrative: '1', moat: '2', overhang: '3', macro: '4' };
+    const verdictMap = {
+      '긍정적': 'vp-pos',
+      '중립':   'vp-neu',
+      '부정적': 'vp-neg',
+    };
+
+    data.sections.forEach(sec => {
+      const col = SECTION_COLORS[sec.id] || { color: '#534AB7', bg: '#EEEDFE' };
+      const num = sectionNums[sec.id] || '';
+      const vCls = verdictMap[sec.verdict] || 'vp-neu';
+
+      const card = document.createElement('div');
+      card.className = 'deep-card';
+
+      const head = document.createElement('div');
+      head.className = 'deep-card-head';
+      head.style.background = col.bg;
+      head.innerHTML = `
+        <div class="deep-card-num" style="background:${col.color}">${num}</div>
+        <div class="deep-card-titles">
+          <p class="deep-card-title">${sec.title}</p>
+          <p class="deep-card-sub">${sec.subtitle}</p>
+        </div>
+        <span class="verdict-pill ${vCls}">${sec.verdict}</span>
+      `;
+      card.appendChild(head);
+
+      const body = document.createElement('div');
+      body.className = 'deep-card-body';
+      body.style.paddingTop = '10px';
+
+      sec.points.forEach(pt => {
+        const pi = POINT_ICONS[pt.type] || POINT_ICONS.neutral;
+        const row = document.createElement('div');
+        row.className = 'deep-point';
+        row.innerHTML = `<i class="ti ${pi.icon} dp-icon ${pi.cls}"></i><span>${pt.text}</span>`;
+        body.appendChild(row);
+      });
+
+      card.appendChild(body);
+      grid.appendChild(card);
+    });
+
+    area.appendChild(grid);
+    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  document.getElementById('companyInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') startAnalysis();
+  });
+
+</script>
+</body>
+</html>
