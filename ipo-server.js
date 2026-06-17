@@ -74,13 +74,14 @@ app.post('/api/analyze', async (req, res) => {
 
 지침:
 - 알려진 사실 기반으로 분석하되, 불확실하거나 비상장으로 정보가 제한적인 부분은 명시하세요.
-- 각 섹션의 points는 4~6개, 긍정/부정/경고/중립을 균형있게 담으세요.
+- 각 섹션의 points는 정확히 3개, 긍정/부정/경고/중립을 균형있게 담으세요.
+- 각 point의 text는 1~2문장으로 간결하게, summary와 overallReason도 짧게 핵심만 작성하세요.
 - 분석은 구체적이고 실무적으로, 한국어로 작성하세요.`;
 
   try {
     const msg = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 4000,
+      max_tokens: 2000,
       tools: [analysisTool],
       tool_choice: { type: 'tool', name: 'ipo_analysis_report' },
       messages: [{ role: 'user', content: prompt }]
