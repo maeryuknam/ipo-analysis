@@ -54,6 +54,19 @@ npm start
 http://localhost:3737/ipo-analysis.html
 ```
 
+## Vercel 배포
+
+이 프로젝트는 Vercel 서버리스 환경에 바로 배포할 수 있습니다.
+
+1. [Vercel](https://vercel.com)에서 이 GitHub 레포를 Import
+2. **Settings → Environment Variables**에 아래 키 추가
+   - Name: `ANTHROPIC_API_KEY`
+   - Value: 발급받은 Anthropic API 키
+3. Deploy
+
+`api/analyze.js`가 서버리스 함수로, 루트(`/`)는 `vercel.json` 설정으로 분석 페이지가 열립니다.
+로컬 개발용 `ipo-server.js`는 Vercel 배포와 무관하게 그대로 두어도 됩니다.
+
 ## 기술 스택
 
 - **백엔드**: Node.js + Express
